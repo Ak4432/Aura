@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>AURA | High-End Makeup Artistry</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@400..700&family=Playfair+Display:ital,wght@0,400..900;1,400..900&family=Plus+Jakarta+Sans:wght@200..800&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js"></script>
+    <script src="https://unpkg.com/lenis@1.0.45/dist/lenis.min.js"></script>
+    <style>
+        :root {
+            --bg-current: #0f0f0f;
+            --text-current: #ffffff;
+            --accent: #ff3366;
+        }
+
+        * { -webkit-tap-highlight-color: transparent; }
+
+        body {
+            background-color: var(--bg-current);
+            color: var(--text-current);
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            overflow-x: hidden;
+            transition: background-color 1s cubic-bezier(0.65, 0, 0.35, 1), color 1s ease;
+        }
+
+        .serif { font-family: 'Playfair Display', serif; }
+        .script { font-family: 'Dancing Script', cursive; }
+
+        .custom-cursor {
+            width: 12px; height: 12px;
+            background: currentColor;
+            border-radius: 50%;
+            position: fixed;
+            pointer-events: none;
+            z-index: 9999;
+            mix-blend-mode: difference;
+            transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        .reveal-mask {
+            clip-path: inset(100% 0 0 0);
+            transition: clip-path 1.5s cubic-bezier(0.77, 0, 0.175, 1);
+        }
+        .reveal-mask.active { clip-path: inset(0% 0 0 0); }
+
+        .parallax-inner { transform: scale(1.1); will-change: transform; }
+
+        nav { transition: background-color 0.4s ease, color 0.4s ease, transform 0.6s ease; }
+        
+        .nav-link::after {
+            content: ''; position: absolute; bottom: -2px; left: 0;
+            width: 0%; height: 1px; background: currentColor;
+            transition: width 0.4s ease;
+        }
+        .nav-link:hover::after { width: 100%; }
+
+        #mobile-menu-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100svh;
+            background: #0f0f0f; z-index: 100; display: flex;
+            flex-direction: column; justify-content: center; align-items: center;
+            transform: translateY(-100%); transition: transform 0.7s cubic-bezier(0.85, 0, 0.15, 1);
+        }
+        #mobile-menu-overlay.active { transform: translateY(0); }
+
+        .loader {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: #0f0f0f; z-index: 10000;
+            display: flex; justify-content: center; align-items: center;
+        }
+
+        .btn-luxury {
+            border: 1px solid currentColor;
+            padding: 12px 28px;
+            position: relative;
+            overflow: hidden;
+            display: inline-block;
+            transition: all 0.4s ease;
+            text-transform: uppercase;
+            font-size: 10px;
+            letter-spacing: 0.2em;
+            font-weight: 700;
+            background: transparent;
+            border-radius: 2px;
+        }
+        @media (min-width: 768px) { .btn-luxury { padding: 16px 40px; letter-spacing: 0.3em; } }
+
+        .btn-luxury::before {
+            content: ''; position: absolute; top: 100%; left: 0; width: 100%; height: 100%;
+            background: currentColor; transition: top 0.4s cubic-bezier(0.7, 0, 0.3, 1); z-index: -1;
+        }
+        .btn-luxury:hover { color: var(--bg-current) !important; }
+        .btn-luxury:hover::before { top: 0; }
+
+        .video-container {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%; overflow: hidden; z-index: 0;
+        }
+        .video-container iframe {
+            position: absolute; top: 50%; left: 50%; width: 100vw; height: 56.25vw;
+            min-height: 100svh; min-width: 177.77svh; transform: translate(-50%, -50%); pointer-events: none;
+        }
+
+        /* Portfolio Marquee */
+        .portfolio-marquee-container { width: 100%; overflow: hidden; display: flex; white-space: nowrap; }
+        .portfolio-track { display: flex; gap: 20px; padding: 20px 0; will-change: transform; }
+        .portfolio-item { flex: 0 0 280px; aspect-ratio: 4/5; overflow: hidden; }
+        @media (min-width: 768px) { .portfolio-track { gap: 40px; } .portfolio-item { flex: 0 0 450px; } }
+
+        /* ADVANCED BOOKING BOT STYLING */
+        #booking-bot { position: fixed; bottom: 20px; right: 20px; z-index: 999; }
+        
+        .bot-window {
+            width: calc(100vw - 30px); max-width: 400px;
+            height: 70vh; background: rgba(255, 255, 255, 0.98); 
+            backdrop-filter: blur(20px); color: #1a1a1a;
+            border-radius: 24px; display: none; flex-direction: column;
+            overflow: hidden; box-shadow: 0 40px 100px rgba(0,0,0,0.2);
+            position: absolute; bottom: 80px; right: 0;
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            transform-origin: bottom right;
+        }
+        @media (max-height: 500px) { .bot-window { height: 85vh; } }
+
+        .bot-header {
+            background: #000; color: white; padding: 24px 28px;
+            display: flex; justify-content: space-between; align-items: center;
+        }
+        .bot-header .serif { letter-spacing: 0.1em; font-size: 1.1rem; }
+
+        .chat-area { 
+            flex: 1; padding: 24px; overflow-y: auto; display: flex; flex-direction: column; gap: 16px; 
+            background: linear-gradient(to bottom, transparent, rgba(0,0,0,0.02));
+        }
+
+        .message {
+            max-width: 80%; padding: 14px 18px; border-radius: 18px; font-size: 13px; line-height: 1.6; position: relative;
+        }
+        .bot-msg { background: #f0f0f0; color: #333; align-self: flex-start; border-bottom-left-radius: 4px; }
+        .user-msg { background: #000; color: white; align-self: flex-end; border-bottom-right-radius: 4px; font-weight: 500; }
+        
+        .bot-input-area { padding: 18px 24px 24px; border-top: 1px solid rgba(0,0,0,0.05); background: #fff; }
+        .input-group { display: flex; gap: 10px; align-items: center; }
+        .bot-input, .bot-select { 
+            flex: 1; border: 1px solid rgba(0,0,0,0.1); background: #fff; padding: 14px 18px; 
+            border-radius: 14px; font-size: 14px; outline: none; transition: border-color 0.3s ease;
+        }
+        .bot-input:focus { border-color: #000; }
+        .bot-send { 
+            background: #000; color: white; width: 48px; height: 48px; border-radius: 14px; 
+            display: flex; justify-content: center; align-items: center; cursor: pointer; transition: transform 0.2s;
+        }
+
+        .hidden-control { display: none !important; }
+        
+        .bot-pill-toggle {
+            height: 56px; padding: 0 32px; background: #000; color: #fff;
+            border-radius: 50px; display: flex; align-items: center; gap: 14px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.2); cursor: pointer; position: relative;
+        }
+        .bot-pill-text { font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.2em; }
+
+        .option-chip {
+            border: 1px solid rgba(0,0,0,0.1); padding: 10px 16px; border-radius: 50px;
+            font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em;
+            cursor: pointer; transition: all 0.3s ease; text-align: center; display: inline-block;
+            margin: 4px; background: white;
+        }
+        .option-chip:hover { border-color: black; background: #000; color: #fff; }
+
+        .hamburger { width: 30px; height: 20px; position: relative; cursor: pointer; z-index: 101; }
+        .hamburger span { display: block; width: 100%; height: 1.5px; background: currentColor; position: absolute; transition: 0.3s ease-in-out; }
+        .hamburger span:nth-child(1) { top: 0; }
+        .hamburger span:nth-child(2) { top: 50%; transform: translateY(-50%); }
+        .hamburger span:nth-child(3) { bottom: 0; }
+        .hamburger.active span:nth-child(1) { transform: translateY(9px) rotate(45deg); }
+        .hamburger.active span:nth-child(2) { opacity: 0; }
+        .hamburger.active span:nth-child(3) { transform: translateY(-9.5px) rotate(-45deg); }
+
+        .map-wrapper { width: 100%; height: 300px; border-radius: 4px; overflow: hidden; box-shadow: 0 20px 40px rgba(0,0,0,0.1); position: relative; }
+        @media (min-width: 768px) { .map-wrapper { height: 400px; } }
+        .map-wrapper iframe { position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: 0; }
+    </style>
+</head>
+<body class="antialiased">
+
+    <!-- Mobile Menu Overlay -->
+    <div id="mobile-menu-overlay">
+        <div class="flex flex-col space-y-8 text-center text-white">
+            <a href="#about" class="serif text-4xl mobile-nav-link" onclick="toggleMenu()">Process</a>
+            <a href="#services" class="serif text-4xl mobile-nav-link" onclick="toggleMenu()">Artistry</a>
+            <a href="#portfolio" class="serif text-4xl mobile-nav-link" onclick="toggleMenu()">Gallery</a>
+            <a href="#contact" class="serif text-4xl mobile-nav-link" onclick="toggleMenu()">Inquiry</a>
+            <div class="pt-8">
+                <button class="btn-luxury border-white text-white open-bot" onclick="toggleMenu()">Book Studio</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="loader">
+        <div class="text-center">
+            <h1 class="text-white serif text-3xl md:text-4xl tracking-[0.4em] opacity-0" id="loader-text">AURA</h1>
+            <div class="w-16 md:w-24 h-[1px] bg-white/10 mx-auto mt-6 overflow-hidden">
+                <div id="loader-bar" class="w-full h-full bg-white -translate-x-full"></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="custom-cursor hidden lg:block" id="cursor"></div>
+
+    <nav class="fixed top-0 left-0 w-full z-50 px-6 py-6 md:px-10 md:py-10 flex justify-between items-center mix-blend-difference text-white">
+        <a href="#" class="serif text-2xl md:text-3xl tracking-tighter">AURA.</a>
+        <div class="hidden md:flex space-x-12 lg:space-x-16 uppercase text-[9px] tracking-[0.4em] font-bold">
+            <a href="#about" class="nav-link relative">Process</a>
+            <a href="#services" class="nav-link relative">Artistry</a>
+            <a href="#portfolio" class="nav-link relative">Gallery</a>
+            <a href="#contact" class="nav-link relative">Inquiry</a>
+        </div>
+        <div class="flex items-center space-x-6">
+            <div class="hidden md:block"><button class="btn-luxury open-bot" style="padding: 10px 24px; font-size: 9px;">Book Studio</button></div>
+            <div class="hamburger md:hidden" onclick="toggleMenu()"><span></span><span></span><span></span></div>
+        </div>
+    </nav>
+
+    <!-- Booking Bot Container -->
+    <div id="booking-bot">
+        <div class="bot-window" id="bot-window">
+            <div class="bot-header">
+                <div class="flex items-center gap-3">
+                    <div class="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
+                    <p class="serif font-bold text-sm tracking-widest uppercase">Concierge</p>
+                </div>
+                <button class="close-bot text-xl opacity-40 hover:opacity-100 leading-none">&times;</button>
+            </div>
+            <div class="chat-area" id="chat-area"></div>
+            
+            <div class="bot-input-area">
+                <div id="group-text" class="input-group">
+                    <input type="text" id="bot-input" class="bot-input" placeholder="Enter your response...">
+                    <button id="bot-send" class="bot-send">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+                    </button>
+                </div>
+                <div id="group-date" class="input-group hidden-control">
+                    <input type="date" id="bot-date" class="bot-input">
+                    <button id="date-send" class="bot-send">Next</button>
+                </div>
+                <div id="group-time" class="input-group hidden-control">
+                    <select id="bot-time" class="bot-select">
+                        <option value="" disabled selected>Session Time...</option>
+                        <option value="09:00 AM">09:00 AM — Morning Prep</option>
+                        <option value="11:30 AM">11:30 AM — Midday Session</option>
+                        <option value="02:00 PM">02:00 PM — Afternoon Glow</option>
+                        <option value="04:30 PM">04:30 PM — Golden Hour</option>
+                        <option value="07:00 PM">07:00 PM — Evening Gala</option>
+                    </select>
+                    <button id="time-send" class="bot-send">Next</button>
+                </div>
+            </div>
+        </div>
+        
+        <div class="bot-pill-toggle open-bot" id="bot-toggle">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+            <span class="bot-pill-text">Concierge</span>
+        </div>
+    </div>
+
+    <main id="main-content">
+        <section class="h-[100svh] relative flex items-center justify-center overflow-hidden p-0" data-bg="#0f0f0f" data-text="#ffffff">
+            <div class="absolute inset-0 z-0"><div class="video-container"><iframe src="https://player.vimeo.com/video/1168361072?background=1&autoplay=1&loop=1&byline=0&title=0&muted=1&quality=1080p" frameborder="0" allow="autoplay; fullscreen" class="parallax-inner"></iframe></div></div>
+            <div class="relative z-10 text-center text-white px-4">
+                <div class="overflow-hidden"><h2 class="script text-6xl sm:text-7xl md:text-[10vw] leading-[0.8] mb-4" id="hero-welcome">Welcome</h2></div>
+                <div class="overflow-hidden"><p class="serif text-[10px] sm:text-sm md:text-xl tracking-[0.2em] md:tracking-[0.3em] uppercase opacity-90">To a Full Beauty & Co Experience</p></div>
+            </div>
+        </section>
+
+        <section id="about" class="px-6 py-20 md:px-32 md:py-52 relative z-10" data-bg="#f4eee0" data-text="#2d2926">
+            <div class="max-w-7xl mx-auto grid md:grid-cols-12 gap-10 items-center">
+                <div class="md:col-span-5 order-2 md:order-1"><div class="reveal-mask overflow-hidden aspect-[3/4] shadow-2xl"><img src="https://cdn.phototourl.com/uploads/2026-02-26-38c29f97-e8d5-4bcc-a97b-b7136602c349.jpg" class="w-full h-full object-cover block"></div></div>
+                <div class="md:col-start-7 md:col-span-6 space-y-6 md:space-y-12 order-1 md:order-2">
+                    <p class="uppercase text-[9px] tracking-[0.5em] text-gray-400 font-bold reveal-text">The Philosophy</p>
+                    <h2 class="serif text-4xl sm:text-5xl md:text-8xl leading-[1.05] reveal-text">Glow is more than a finish.</h2>
+                    <p class="text-gray-600 leading-relaxed max-w-md text-base md:text-xl font-light reveal-text">We curate light to reveal your inner spectrum through multidimensional radiance.</p>
+                    <div class="pt-4 reveal-text"><a href="#" class="btn-luxury">Our Heritage</a></div>
+                </div>
+            </div>
+        </section>
+
+        <section id="services" class="px-6 py-20 md:px-32 md:py-52" data-bg="#3b0a0a" data-text="#ffffff">
+            <div class="max-w-7xl mx-auto">
+                <div class="mb-12 md:mb-32 flex flex-col md:flex-row justify-between gap-4"><h2 class="serif text-5xl md:text-9xl">The Craft</h2><p class="text-white/30 text-[10px] md:text-sm uppercase tracking-[0.2em]">High-fashion palettes.</p></div>
+                <div class="grid md:grid-cols-3 gap-12 md:gap-20">
+                    <div class="service-card group"><div class="reveal-mask overflow-hidden mb-6 aspect-[4/5] bg-black/20"><img src="https://cdn.phototourl.com/uploads/2026-02-26-b34c64e9-2f30-4f8d-806d-e13d49544f70.jpg" class="w-full h-full object-cover"></div><h3 class="serif text-2xl md:text-4xl mb-4">Velvet Bridal</h3><div class="h-[1px] bg-white/10 group-hover:bg-white/40"></div></div>
+                    <div class="service-card group md:mt-40"><div class="reveal-mask overflow-hidden mb-6 aspect-[4/5] bg-black/20"><img src="https://cdn.phototourl.com/uploads/2026-02-26-a30aecb4-b811-4800-84a1-b0ee20255da9.png" class="w-full h-full object-cover"></div><h3 class="serif text-2xl md:text-4xl mb-4">Chroma Editorial</h3><div class="h-[1px] bg-white/10 group-hover:bg-white/40"></div></div>
+                    <div class="service-card group"><div class="reveal-mask overflow-hidden mb-6 aspect-[4/5] bg-black/20"><img src="https://cdn.phototourl.com/uploads/2026-02-26-d55f4716-2b32-492f-8b1c-73141a775abd.jpg" class="w-full h-full object-cover"></div><h3 class="serif text-2xl md:text-4xl mb-4">Studio Mastery</h3><div class="h-[1px] bg-white/10 group-hover:bg-white/40"></div></div>
+                </div>
+            </div>
+        </section>
+
+        <section id="portfolio" class="overflow-hidden py-20 md:py-52" data-bg="#2d332d" data-text="#e2e8e2">
+            <div class="px-6 md:px-32 mb-12"><h2 class="serif text-5xl md:text-9xl tracking-tighter">The Gallery.</h2></div>
+            <div class="portfolio-marquee-container" id="marquee-container">
+                <div class="portfolio-track" id="portfolio-track">
+                    <div class="portfolio-item"><img src="https://cdn.phototourl.com/uploads/2026-02-26-45cb689d-2186-450e-983c-ea68e74dfe8b.png" class="w-full h-full object-cover"></div>
+                    <div class="portfolio-item"><img src="https://cdn.phototourl.com/uploads/2026-02-26-0afc54f9-43c1-43f0-b3dd-a0ee6fa7edf1.jpg" class="w-full h-full object-cover"></div>
+                    <div class="portfolio-item"><img src="https://cdn.phototourl.com/uploads/2026-02-26-9db1d687-2ce1-4264-9b18-1e02f5a02b5b.jpg" class="w-full h-full object-cover"></div>
+                    <div class="portfolio-item"><img src="https://cdn.phototourl.com/uploads/2026-02-26-ee70b1a5-3272-4ac7-bab7-ef338f20ab98.jpg" class="w-full h-full object-cover"></div>
+                </div>
+            </div>
+        </section>
+
+        <section id="contact" class="px-6 py-20 md:px-32 md:py-52" data-bg="#914d1d" data-text="#fff">
+            <div class="max-w-6xl mx-auto space-y-16">
+                <div class="text-center"><h2 class="serif text-5xl md:text-9xl tracking-tighter">Connect.</h2></div>
+                <div class="grid md:grid-cols-2 gap-12">
+                    <div class="map-wrapper overflow-hidden" data-lenis-prevent><iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d2624.142047744348!2d2.3313903156691456!3d48.8712613792892!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x47e66e38f16ad34d%3A0x4a47804914c6e54c!2s14%20Rue%20de%20la%20Paix%2C%2075002%20Paris%2C%20France!5e0!3m2!1sen!2sus!4v1625000000000!5m2!1sen!2sus" allowfullscreen="" loading="lazy"></iframe></div>
+                    <div class="space-y-8 bg-white/10 p-8 rounded-sm backdrop-blur-md border border-white/5 flex flex-col justify-center">
+                        <p class="uppercase text-[9px] font-bold">Inquiries</p>
+                        <div class="space-y-4">
+                            <a href="mailto:hello@aura.com" class="serif text-3xl md:text-4xl block">hello@aura.com</a>
+                            <p class="serif text-3xl md:text-4xl">+1 (555) 012-3456</p>
+                        </div>
+                        <button class="btn-luxury w-full mt-10 py-6 open-bot">Start Your Booking</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer class="py-10 px-6 flex flex-col md:flex-row justify-between items-center text-[8px] tracking-[0.4em] uppercase opacity-40 gap-6"><div>&copy; 2026 Aura Artistry</div><div class="flex space-x-8"><a>Instagram</a><a>Pinterest</a></div></footer>
+
+    <script>
+        const lenis = new Lenis();
+        function raf(time) { lenis.raf(time); requestAnimationFrame(raf); }
+        requestAnimationFrame(raf);
+
+        gsap.registerPlugin(ScrollTrigger);
+
+        function toggleMenu() {
+            const m = document.getElementById('mobile-menu-overlay');
+            const h = document.querySelector('.hamburger');
+            m.classList.toggle('active'); h.classList.toggle('active');
+            document.body.style.overflow = m.classList.contains('active') ? 'hidden' : 'auto';
+        }
+
+        window.onload = () => {
+            const tl = gsap.timeline();
+            tl.to("#loader-text", { opacity: 1, duration: 1 }).to("#loader-bar", { x: "0%", duration: 1 }).to(".loader", { y: "-100%", duration: 1, ease: "expo.inOut" }).from("#hero-welcome", { y: 60, opacity: 0, duration: 1.5 });
+
+            const track = document.getElementById("portfolio-track");
+            const items = Array.from(track.children);
+            items.forEach(i => track.appendChild(i.cloneNode(true)));
+            items.forEach(i => track.appendChild(i.cloneNode(true)));
+            const marquee = gsap.to(track, { x: () => -(track.scrollWidth / 3), duration: 40, ease: "none", repeat: -1 });
+            const mc = document.getElementById("marquee-container");
+            mc.addEventListener("mouseenter", () => marquee.pause()); mc.addEventListener("mouseleave", () => marquee.play());
+
+            gsap.utils.toArray('section[data-bg]').forEach(s => {
+                ScrollTrigger.create({ trigger: s, start: "top 50%", end: "bottom 50%", onToggle: self => { if (self.isActive) { gsap.to("body", { backgroundColor: s.dataset.bg, color: s.dataset.text, duration: 1 }); } } });
+            });
+
+            gsap.utils.toArray('.reveal-mask').forEach(m => { ScrollTrigger.create({ trigger: m, start: "top 85%", onEnter: () => m.classList.add('active') }); });
+
+            // UPDATED BOOKING BOT
+            const bw = document.getElementById('bot-window');
+            const bt = document.getElementById('bot-toggle');
+            const ca = document.getElementById('chat-area');
+            const bi = document.getElementById('bot-input');
+            const data = { name: '', service: '', date: '', time: '' };
+            let step = 0;
+
+            const msgs = [
+                "Welcome to AURA. May I have your name?",
+                "Hi {name}, choose a service: <br><div class='mt-3 flex flex-wrap justify-center'><span class='option-chip' onclick='setOpt(\"service\", \"Bridal\")'>Bridal Couture</span><span class='option-chip' onclick='setOpt(\"service\", \"Editorial\")'>Editorial Art</span><span class='option-chip' onclick='setOpt(\"service\", \"Masterclass\")'>Private Masterclass</span></div>",
+                "Select your artistry date.",
+                "Pick an available session time.",
+                "Coordinates received. Confirm your request via WhatsApp below."
+            ];
+
+            function addMsg(txt, isBot = true) {
+                const div = document.createElement('div');
+                div.className = `message ${isBot ? 'bot-msg' : 'user-msg'}`;
+                div.innerHTML = txt; ca.appendChild(div); ca.scrollTop = ca.scrollHeight;
+                gsap.from(div, { y: 15, opacity: 0, duration: 0.4, ease: "back.out" });
+            }
+
+            window.setOpt = (k, v) => { data[k] = v; addMsg(v, false); next(); };
+
+            function next() {
+                step++;
+                document.getElementById('group-text').classList.add('hidden-control');
+                document.getElementById('group-date').classList.add('hidden-control');
+                document.getElementById('group-time').classList.add('hidden-control');
+
+                if (step === 2) document.getElementById('group-date').classList.remove('hidden-control');
+                else if (step === 3) document.getElementById('group-time').classList.remove('hidden-control');
+                else if (step < 4) document.getElementById('group-text').classList.remove('hidden-control');
+
+                setTimeout(() => {
+                    addMsg(msgs[step].replace('{name}', data.name));
+                    if (step === 4) {
+                        const bc = document.createElement('div'); bc.className = "w-full flex justify-center mt-6";
+                        const b = document.createElement('button');
+                        b.className = "bg-black text-white text-[10px] font-bold rounded-full px-10 py-4 shadow-xl";
+                        b.innerText = "Confirm WhatsApp Request";
+                        b.onclick = () => window.open(`https://wa.me/15550123456?text=${encodeURIComponent('AURA Booking:\\n' + JSON.stringify(data, null, 2))}`);
+                        bc.appendChild(b); ca.appendChild(bc);
+                    }
+                }, 800);
+            }
+
+            document.getElementById('bot-send').onclick = () => { const v = bi.value.trim(); if(!v) return; data.name = v; bi.value = ''; addMsg(v, false); next(); };
+            document.getElementById('date-send').onclick = () => { const v = document.getElementById('bot-date').value; if(!v) return; data.date = v; addMsg(v, false); next(); };
+            document.getElementById('time-send').onclick = () => { const v = document.getElementById('bot-time').value; if(!v) return; data.time = v; addMsg(v, false); next(); };
+
+            document.querySelectorAll('.open-bot').forEach(b => b.onclick = () => {
+                bw.style.display = 'flex'; gsap.from(bw, { scale: 0.9, opacity: 0, duration: 0.4 });
+                bt.style.display = 'none'; if(!ca.children.length) addMsg(msgs[0]);
+            });
+            document.querySelector('.close-bot').onclick = () => { bw.style.display = 'none'; bt.style.display = 'flex'; };
+        };
+    </script>
+</body>
+</html>
